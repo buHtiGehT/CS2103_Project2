@@ -24,7 +24,7 @@ public class CacheTest {
 		storage1.put(2, "Brandon");
 		storage1.put(3, "Charlie");
 		storage1.put(4, "Dane");
-		storage1.put(5, "Eric");
+		storage1.put(5, null);
 		storage1.put(6, "Fred");
 		storage1.put(7, "Gregor");
 		storage1.put(8, "Harry");
@@ -33,16 +33,8 @@ public class CacheTest {
 		
 		// A DataProvider of which holds 10 key value combinations in Integer, String format
 		// Keys:   1      2       3       4    5    6    7      8     9     10
-		// Values: Albert Brandon Charlie Dane Eric Fred Gregor Harry Isaac Jeremy
+		// Values: Albert Brandon Charlie Dane null Fred Gregor Harry Isaac Jeremy
 		_provider = new NameStorage(storage1);
-	}
-	
-	@Test(expected = IllegalArgumentException.class)
-	public void ifItemIsNotInDataProvider() {
-		DataProvider<Integer,String> provider = _provider;
-		Cache<Integer, String> cache = new LRUCache<Integer, String>(provider, 5);
-		
-		cache.get(11);
 	}
 	
 	@Test
@@ -69,7 +61,7 @@ public class CacheTest {
 		
 		assertEquals(cache.get(1), "Albert");
 		assertEquals(cache.get(2), "Brandon");
-		assertEquals(cache.get(5), "Eric");
+		assertNull(cache.get(5));
 		
 		//re-call key 1
 		assertEquals(cache.get(1), "Albert");
@@ -110,5 +102,11 @@ public class CacheTest {
 		//call 9 to prove 
 		cache.get(9);
 		assertEquals(cache.getNumMisses(), 9);
+		
+		
+		//contains a null value for key 5, should still work properly
+		cache.get(5);
+		cache.get(5);
+		assertEquals(cache.getNumMisses(), 10);
 	}
 }
