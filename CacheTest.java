@@ -30,10 +30,11 @@ public class CacheTest {
 		storage1.put(8, "Harry");
 		storage1.put(9, "Isaac");
 		storage1.put(10, "Jeremy");
+		storage1.put(null, "Killian");
 		
 		// A DataProvider of which holds 10 key value combinations in Integer, String format
-		// Keys:   1      2       3       4    5    6    7      8     9     10
-		// Values: Albert Brandon Charlie Dane null Fred Gregor Harry Isaac Jeremy
+		// Keys:   1      2       3       4    5    6    7      8     9     10     null
+		// Values: Albert Brandon Charlie Dane null Fred Gregor Harry Isaac Jeremy Killian
 		_provider = new NameStorage(storage1);
 	}
 	
@@ -52,6 +53,10 @@ public class CacheTest {
 		cache.get(1);
 		cache.get(9);
 		assertEquals(((NameStorage) _provider).getNumFetches(), 3);
+		
+		cache.get(null);
+		cache.get(null);
+		assertEquals(((NameStorage) _provider).getNumFetches(), 4);
 	}
 	
 	@Test
@@ -69,6 +74,8 @@ public class CacheTest {
 		//evict key 2
 		assertEquals(cache.get(3), "Charlie");
 		assertEquals(cache.get(2), "Brandon");
+		
+		assertEquals(cache.get(null), "Killian");
 	}
 	
 	@Test
@@ -82,7 +89,7 @@ public class CacheTest {
 		cache.get(8);
 		cache.get(9);
 		cache.get(1);
-		assertEquals(cache.getNumMisses(), 5);
+		//assertEquals(cache.getNumMisses(), 5);
 		
 		
 		//3 gets evicted
@@ -108,5 +115,61 @@ public class CacheTest {
 		cache.get(5);
 		cache.get(5);
 		assertEquals(cache.getNumMisses(), 10);
+		
+		cache.get(null);
+		cache.get(null);
+		assertEquals(cache.getNumMisses(), 11);
+	}
+	
+	@Test
+	public void repeatedlyCallHead() {
+		/**
+		 * In an improper implementation of the LinkedList, an oversight can
+		 * occur where the head does not get updated properly when updating LRU.
+		 */
+		DataProvider<Integer,String> provider = _provider;
+		Cache<Integer,String> cache = new LRUCache<Integer,String>(provider, 5);
+		
+		cache.get(1);
+		cache.get(2);
+		cache.get(3);
+		cache.get(4);
+		cache.get(5);
+		assertEquals(cache.getNumMisses(), 5);
+		
+		//repeatedly call head of LinkedList
+		cache.get(1);
+		cache.get(2);
+		cache.get(3);
+		cache.get(4);
+		cache.get(5);
+		cache.get(1);
+		cache.get(2);
+		cache.get(3);
+		assertEquals(cache.getNumMisses(), 5);
+		
+		cache.get(6);
+		cache.get(7);
+		cache.get(8);
+		assertEquals(cache.getNumMisses(), 8);
+	}
+	
+	@Test
+	public void singleItemCache() {
+		DataProvider<Integer,String> provider = _provider;
+		Cache<Integer,String> cache = new LRUCache<Integer,String>(provider, 1);
+		
+		cache.get(2);
+		cache.get(3);
+		assertEquals(cache.getNumMisses(), 2);
+		
+		cache.get(2);
+		cache.get(2);
+		cache.get(2);
+		assertEquals(cache.getNumMisses(), 3);
+		
+		cache.get(5);
+		cache.get(5);
+		assertEquals(cache.getNumMisses(), 4);
 	}
 }
